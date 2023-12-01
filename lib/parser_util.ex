@@ -25,7 +25,9 @@ defmodule ParserUtil do
     many(comb, options ++ [min: 1])
   end
 
-  def sep_by(comb, sep, options \\ []) do
+  def sep_by(comb, sep, options \\ [])
+
+  def sep_by(comb, sep, options) when is_list(options) do
     if Keyword.get(options, :min, 0) == 0 do
       optional(sep_by(comb, sep, [min: 1] ++ options))
     else
@@ -35,6 +37,10 @@ defmodule ParserUtil do
         Keyword.update!(options, :min, &(&1 - 1))
       )
     end
+  end
+
+  def sep_by(comb, sep, count) when is_integer(count) do
+    comb |> times(ignore(sep) |> concat(comb), count - 1)
   end
 
   def sep_by_1(comb, sep, options \\ []) do
