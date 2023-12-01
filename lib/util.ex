@@ -11,4 +11,6 @@ defmodule Util do
   def read_input!(year, day, type \\ nil) do
     File.read!(input_file(year, day, type))
   end
+
+  def inc(x), do: x + 1
 end
