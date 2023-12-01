@@ -1,6 +1,18 @@
 # Advent of Elixir
 
 
+## Setup a day
+
+Generate elixir files:
+
+```bash
+mix gen_day         # current day
+mix gen_day 2023 1  # a specific day
+```
+
+Download your input and stick it next to the module, e.g.
+`lib/advent_2023/day_01.txt`
+
 ## Run
 
 ```bash
