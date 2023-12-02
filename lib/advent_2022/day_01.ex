@@ -8,10 +8,10 @@ defmodule Advent2022.Day01 do
     import ParserUtil
 
     block =
-      many_1(integer(min: 1) |> ignore(eol_or_eos()))
+      repeat_1(integer(min: 1) |> ignore(eol_or_eos()))
 
     file =
-      many_1(block |> wrap() |> ignore(eol_or_eos()))
+      repeat_1(block |> wrap() |> ignore(eol_or_eos()))
 
     defparser :parse, file
   end

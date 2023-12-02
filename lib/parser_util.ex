@@ -4,48 +4,82 @@ defmodule ParserUtil do
   """
 
   import NimbleParsec
+  @type t :: NimbleParsec.t()
+  @type min_and_max :: NimbleParsec.min_and_max()
 
-  def space do
-    string(" ")
+  ## -- Combinators -----------------------------------------------------------
+
+  def space(prev \\ empty()) do
+    prev |> string(" ")
   end
 
-  def eol do
-    string("\n")
+  def eol(prev \\ empty()) do
+    prev |> string("\n")
   end
 
-  def eol_or_eos do
-    choice([eol(), eos()])
+  def eol_or_eos(prev \\ empty()) do
+    prev |> choice([eol(), eos()])
   end
 
-  def many(comb, options \\ []) do
-    times(comb, options ++ [min: 0])
+  @doc """
+  Parses `to_repeat` one or more times.
+  """
+  @spec repeat_1(t) :: t
+  @spec repeat_1(t, t) :: t
+  def repeat_1(prev \\ empty(), to_repeat) do
+    times(prev, to_repeat, min: 1)
   end
 
-  def many_1(comb, options \\ []) do
-    many(comb, options ++ [min: 1])
+  @doc """
+  Parses `subj` separated by `sep`.
+
+  Takes the same options as `NimbleParsec.times/3`, either an exact count or a
+  min and max.
+  """
+  @spec sep_by(t, t, pos_integer | [min_and_max]) :: t
+  @spec sep_by(t, t, t, pos_integer | [min_and_max]) :: t
+  def sep_by(prev \\ empty(), subj, sep, count_or_min_max)
+
+  def sep_by(prev, subj, _sep, count) when is_integer(count) and count == 1 do
+    prev |> concat(subj)
   end
 
-  def sep_by(comb, sep, options \\ [])
+  def sep_by(prev, subj, sep, count) when is_integer(count) and count > 1 do
+    prev |> concat(subj) |> times(ignore(sep) |> concat(subj), count - 1)
+  end
 
-  def sep_by(comb, sep, options) when is_list(options) do
-    if Keyword.get(options, :min, 0) == 0 do
-      optional(sep_by(comb, sep, [min: 1] ++ options))
+  def sep_by(prev, subj, sep, min_max) when is_list(min_max) do
+    if Keyword.get(min_max, :min, 0) == 0 do
+      optional(sep_by(prev, subj, sep, [min: 1] ++ min_max))
     else
-      comb
-      |> times(
-        ignore(sep) |> concat(comb),
-        Keyword.update!(options, :min, &(&1 - 1))
-      )
+      prev
+      |> concat(subj)
+      |> times(ignore(sep) |> concat(subj), dec_min_max(min_max))
     end
   end
 
-  def sep_by(comb, sep, count) when is_integer(count) do
-    comb |> times(ignore(sep) |> concat(comb), count - 1)
+  defp dec_min_max(min_max) when is_list(min_max) do
+    Enum.map(min_max, fn
+      {k, v} when k == :min or k == :max -> {k, v - 1}
+      other -> other
+    end)
   end
 
-  def sep_by_1(comb, sep, options \\ []) do
-    sep_by(comb, sep, options ++ [min: 1])
-  end
+  @doc """
+  Parses 0 or more occurrences of `subj` separated by `sep`.
+  """
+  @spec sep_by_0(t, t) :: t
+  @spec sep_by_0(t, t, t) :: t
+  def sep_by_0(prev \\ empty(), subj, sep), do: sep_by(prev, subj, sep, min: 0)
+
+  @doc """
+  Parses 1 or more occurrences of `subj` separated by `sep`.
+  """
+  @spec sep_by_0(t, t) :: t
+  @spec sep_by_0(t, t, t) :: t
+  def sep_by_1(prev \\ empty(), subj, sep), do: sep_by(prev, subj, sep, min: 1)
+
+  ## -- Parsing helpers -------------------------------------------------------
 
   def extract_result!(result_tuple) do
     case result_tuple do
