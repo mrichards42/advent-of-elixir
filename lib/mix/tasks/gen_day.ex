@@ -2,15 +2,26 @@ defmodule Mix.Tasks.GenDay do
   use Mix.Task
   require Mix.Generator
 
+  # Lack of whitespace control/trimming makes the conditionals here this pretty
+  # ugly
   Mix.Generator.embed_template(:module, ~S'''
   defmodule <%= @module %> do
     @moduledoc """
     Day <%= @day %>: TITLE
     """
 
-    def parse_input(input) do
+    <%= if @parsec do %>defmodule InputParser do
+      import NimbleParsec
+      import ParserUtil
+
+      line =
+        ascii_string([?a..?z, ?A..?Z, ?0..?9], min: 1)
+        |> ignore(eol_or_eos())
+
+      defparser :parse, repeat(line)
+    end<% else %>def parse_input(input) do
       input
-    end
+    end<% end %>
 
     @doc """
     Part 1: DESCRIPTION
@@ -20,7 +31,10 @@ defmodule Mix.Tasks.GenDay do
     """
     def part1(input) do
       input
-      |> parse_input()
+      <%= if @parsec do %>|> InputParser.parse!()<% else %>|> parse_input()<% end %>
+
+      # remove when working on this part
+      nil
     end
 
     @doc """
@@ -31,7 +45,10 @@ defmodule Mix.Tasks.GenDay do
     """
     def part2(input) do
       input
-      |> parse_input()
+      <%= if @parsec do %>|> InputParser.parse!()<% else %>|> parse_input()<% end %>
+
+      # remove when working on this part
+      nil
     end
   end
   ''')
@@ -44,7 +61,11 @@ defmodule Mix.Tasks.GenDay do
   ''')
 
   @impl Mix.Task
-  def run([year_str, day_str]) when is_bitstring(year_str) and is_bitstring(day_str) do
+  def run(argv) do
+    run_impl(OptionParser.parse!(argv, strict: [parsec: :boolean, overwrite: :boolean]))
+  end
+
+  def run_impl({opts, [year_str, day_str]}) do
     year = String.to_integer(year_str)
     day = String.to_integer(day_str)
     padded_day = String.pad_leading(Integer.to_string(day), 2, "0")
@@ -52,20 +73,21 @@ defmodule Mix.Tasks.GenDay do
     test_file = Path.join(["test", "advent_#{year}", "day_#{padded_day}_test.exs"])
     module = "Advent#{year}.Day#{padded_day}"
 
-    if File.exists?(file) do
+    if File.exists?(file) and !opts[:overwrite] do
       Mix.raise("File for advent #{year} #{padded_day} already exists: #{file}")
     end
 
-    Mix.Generator.create_file(file, module_template(module: module, year: year, day: day))
-    Mix.Generator.create_file(test_file, test_template(module: module, year: year, day: day))
+    template_args = [module: module, year: year, day: day] ++ opts ++ [parsec: false]
+    Mix.Generator.create_file(file, module_template(template_args))
+    Mix.Generator.create_file(test_file, test_template(template_args))
   end
 
-  def run([day]) do
-    run([Integer.to_string(now().year), day])
+  def run_impl({opts, [day_str]}) do
+    run_impl({opts, [Integer.to_string(now().year), day_str]})
   end
 
-  def run([]) do
-    run([Integer.to_string(now().day)])
+  def run_impl({opts, []}) do
+    run_impl({opts, [Integer.to_string(now().day)]})
   end
 
   defp now() do
