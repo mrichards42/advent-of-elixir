@@ -3,7 +3,7 @@ defmodule Advent2015.Day02 do
   Day 2: I Was Told There Would Be No Math
   """
 
-  defmodule Parser do
+  defmodule InputParser do
     import NimbleParsec
     import ParserUtil
 
@@ -16,12 +16,7 @@ defmodule Advent2015.Day02 do
       |> unwrap_and_tag(integer(min: 1), :h)
       |> reduce({Map, :new, []})
 
-    defparsec :parser, repeat(line |> ignore(eol_or_eos()))
-  end
-
-  def parse_input(input) do
-    input
-    |> ParserUtil.parse!(&Parser.parser/1)
+    defparser :parse, repeat(line |> ignore(eol_or_eos()))
   end
 
   def calc_wrapping_paper(%{l: l, w: w, h: h}) do
@@ -37,7 +32,7 @@ defmodule Advent2015.Day02 do
   """
   def part1(input) do
     input
-    |> parse_input()
+    |> InputParser.parse!()
     |> Enum.map(&calc_wrapping_paper/1)
     |> Enum.sum()
   end
@@ -56,7 +51,7 @@ defmodule Advent2015.Day02 do
   """
   def part2(input) do
     input
-    |> parse_input()
+    |> InputParser.parse!()
     |> Enum.map(&calc_ribbon/1)
     |> Enum.sum()
   end

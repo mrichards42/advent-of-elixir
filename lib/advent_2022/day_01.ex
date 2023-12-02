@@ -3,7 +3,7 @@ defmodule Advent2022.Day01 do
   Day 1: Calorie Counting
   """
 
-  defmodule Parser do
+  defmodule InputParser do
     import NimbleParsec
     import ParserUtil
 
@@ -13,12 +13,7 @@ defmodule Advent2022.Day01 do
     file =
       many_1(block |> wrap() |> ignore(eol_or_eos()))
 
-    defparsec :parser, file
-  end
-
-  def parse_input(input) do
-    input
-    |> ParserUtil.parse!(&Parser.parser/1)
+    defparser :parse, file
   end
 
   @doc """
@@ -29,7 +24,7 @@ defmodule Advent2022.Day01 do
   """
   def part1(input) do
     input
-    |> parse_input()
+    |> InputParser.parse!()
     |> Enum.map(&Enum.sum/1)
     |> Enum.max()
   end
@@ -42,7 +37,7 @@ defmodule Advent2022.Day01 do
   """
   def part2(input) do
     input
-    |> parse_input()
+    |> InputParser.parse!()
     |> Enum.map(&Enum.sum/1)
     |> Enum.sort()
     |> Enum.slice(-3..-1)

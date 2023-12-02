@@ -47,8 +47,8 @@ defmodule ParserUtil do
     sep_by(comb, sep, options ++ [min: 1])
   end
 
-  def parse!(input, parser) do
-    case parser.(input) do
+  def extract_result!(result_tuple) do
+    case result_tuple do
       {:ok, result, "", _, _, _} ->
         result
 
@@ -57,6 +57,31 @@ defmodule ParserUtil do
 
       {:error, err, rest, _, {line, char}, _} ->
         raise "Parsing failure: at line #{line} char #{char}: #{err}. Rest: #{inspect(rest)}"
+    end
+  end
+
+  def parse!(input, parser) do
+    extract_result!(parser.(input))
+  end
+
+  @doc """
+  Like defparsec, but also defines a function `name!` that returns the parse
+  result or raises an error.
+  """
+  defmacro defparser(name, parser) do
+    name_bang = String.to_atom(Atom.to_string(name) <> "!")
+
+    quote do
+      defparsec unquote(name), unquote(parser)
+
+      @doc """
+      Parses the given binary. Returns a list of parse results, or raises an
+      error if the input did not fully match.
+      """
+      @spec unquote(name_bang)(binary) :: [term]
+      def unquote(name_bang)(input) do
+        extract_result!(unquote(name)(input))
+      end
     end
   end
 end

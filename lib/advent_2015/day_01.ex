@@ -3,7 +3,7 @@ defmodule Advent2015.Day01 do
   Day 1: Not Quite Lisp
   """
 
-  defmodule Parser do
+  defmodule InputParser do
     import NimbleParsec
     import ParserUtil
 
@@ -13,12 +13,7 @@ defmodule Advent2015.Day01 do
         ascii_char(~c")") |> replace(-1)
       ])
 
-    defparsec :parser, repeat(paren) |> ignore(eol_or_eos())
-  end
-
-  def parse_input(input) do
-    input
-    |> ParserUtil.parse!(&Parser.parser/1)
+    defparser :parse, repeat(paren) |> ignore(eol_or_eos())
   end
 
   @doc """
@@ -29,7 +24,7 @@ defmodule Advent2015.Day01 do
   """
   def part1(input) do
     input
-    |> parse_input()
+    |> InputParser.parse!()
     |> Enum.sum()
   end
 
@@ -41,7 +36,7 @@ defmodule Advent2015.Day01 do
   """
   def part2(input) do
     input
-    |> parse_input()
+    |> InputParser.parse!()
     |> Enum.scan(&+/2)
     |> Enum.take_while(&(&1 >= 0))
     |> Enum.count()

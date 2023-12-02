@@ -36,7 +36,7 @@ defmodule Advent2022.Day02 do
     )
   end
 
-  defmodule Parser do
+  defmodule InputParser do
     import NimbleParsec
     import ParserUtil
 
@@ -48,12 +48,12 @@ defmodule Advent2022.Day02 do
       |> ignore(optional(eol_or_eos()))
       |> wrap()
 
-    defparsec :parser, repeat(line)
+    defparser :parse, repeat(line)
   end
 
   def parse_input(input, mapping) do
     input
-    |> ParserUtil.parse!(&Parser.parser/1)
+    |> InputParser.parse!()
     |> Enum.map(fn [fst, snd] ->
       Map.new(mapping[fst] ++ mapping[snd])
     end)
