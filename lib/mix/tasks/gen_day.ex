@@ -55,7 +55,7 @@ defmodule Mix.Tasks.GenDay do
 
   Mix.Generator.embed_template(:test, ~S'''
   defmodule <%= @module %>Test do
-    use ExUnit.Case
+    use ExUnit.Case, async: true
     doctest <%= @module %>
   end
   ''')
