@@ -14,11 +14,9 @@ defmodule Mix.Tasks.GenDay do
       import NimbleParsec
       import ParserUtil
 
-      line =
-        ascii_string([?a..?z, ?A..?Z, ?0..?9], min: 1)
-        |> ignore(eol_or_eos())
+      line = ascii_string([?a..?z, ?A..?Z, ?0..?9], min: 1)
 
-      defparser :parse, repeat(line)
+      defparser :parse, repeat_1(line |> ignore(eol_or_eos()))
     end<% else %>def parse_input(input) do
       input
     end<% end %>
