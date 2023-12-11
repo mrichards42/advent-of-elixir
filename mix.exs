@@ -21,7 +21,9 @@ defmodule AdventOfElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nimble_parsec, "~> 1.0"}
+      {:nimble_parsec, "~> 1.0"},
+      {:jason, "~> 1.4"},
+      {:math, "~> 0.7.0"}
     ]
   end
 end
