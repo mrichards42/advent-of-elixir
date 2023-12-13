@@ -23,7 +23,8 @@ defmodule AdventOfElixir.MixProject do
     [
       {:nimble_parsec, "~> 1.0"},
       {:jason, "~> 1.4"},
-      {:math, "~> 0.7.0"}
+      {:math, "~> 0.7.0"},
+      {:memoize, "~> 1.4"}
     ]
   end
 end
