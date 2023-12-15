@@ -1,6 +1,6 @@
 defmodule Advent2023.Day13 do
   @moduledoc """
-  Day 13: TITLE
+  Day 13: Point of Incidence
   """
 
   def parse_input(input) do
@@ -15,7 +15,7 @@ defmodule Advent2023.Day13 do
   end
 
   @doc """
-  Part 1: DESCRIPTION
+  Part 1: Find the reflection point in each block
 
       iex> Advent2023.Day13.part1(Util.read_input!(2023, 13))
       35360
@@ -27,63 +27,32 @@ defmodule Advent2023.Day13 do
     |> Enum.sum()
   end
 
-  def reflection_scores(map) do
-    vertical = find_reflection(map)
-    r_vertical = find_reflection(Enum.map(map, &Enum.reverse/1))
-    horizontal = find_reflection(transpose(map))
-    r_horizontal = find_reflection(transpose(Enum.reverse(map)))
+  def reflection_scores(grid) do
+    horizontals = find_reflections(grid)
+    verticals = find_reflections(transpose(grid))
 
-    height = length(map)
-    width = length(hd(map))
-
-    # number of columns to the left/above the reflection line (horizontals * 100)
-    Enum.filter(
-      [
-        vertical && width - vertical,
-        r_vertical && r_vertical,
-        horizontal && (height - horizontal) * 100,
-        r_horizontal && r_horizontal * 100
-      ],
-      &Function.identity/1
-    )
+    verticals ++ Enum.map(horizontals, &(&1 * 100))
   end
 
   def transpose(lines), do: Enum.zip(lines) |> Enum.map(&Tuple.to_list/1)
 
-  def find_reflection(lines) do
-    line_count = length(lines)
-    # Find the reflection point that exists in all lines
-    lines
-    |> Enum.flat_map(&line_reflections/1)
-    |> Enum.frequencies()
-    |> Enum.find_value(fn {mid, val} ->
-      if val == line_count do
-        mid
+  def find_reflections(lines) do
+    count = length(lines)
+    mid = div(count, 2)
+
+    Enum.filter(1..(count - 1), fn idx ->
+      {a, b} = Enum.split(lines, idx)
+
+      if idx > mid do
+        List.starts_with?(Enum.reverse(a), b)
+      else
+        List.starts_with?(b, Enum.reverse(a))
       end
     end)
   end
 
-  def line_reflections([]), do: []
-
-  def line_reflections(line) do
-    len = length(line)
-
-    if rem(len, 2) == 1 do
-      line_reflections(tl(line))
-    else
-      mid = div(len, 2)
-      {a, b} = Enum.split(line, mid)
-
-      if a == Enum.reverse(b) do
-        [mid | line_reflections(tl(tl(line)))]
-      else
-        line_reflections(tl(tl(line)))
-      end
-    end
-  end
-
   @doc """
-  Part 2: DESCRIPTION
+  Part 2: Find the *new* reflection point in each block after flipping one cell
 
       iex> Advent2023.Day13.part2(Util.read_input!(2023, 13))
       36755
@@ -95,28 +64,26 @@ defmodule Advent2023.Day13 do
     |> Enum.sum()
   end
 
-  def unsmudge("#"), do: "."
-  def unsmudge("."), do: "#"
+  def smudge("#"), do: "."
+  def smudge("."), do: "#"
 
-  def reflection_score_with_smudge(map) do
-    height = length(map)
-    width = length(hd(map))
-    flat = List.flatten(map)
+  def reflection_score_with_smudge(grid) do
+    orig_scores = MapSet.new(reflection_scores(grid))
 
-    orig_scores = MapSet.new(reflection_scores(map))
+    height = length(grid)
+    width = length(hd(grid))
+    flat_grid = List.flatten(grid)
 
-    Stream.map(0..(width * height - 1), fn idx ->
-      flat
-      |> List.update_at(idx, &unsmudge/1)
-      |> Enum.chunk_every(width)
-    end)
-    |> Enum.find_value(fn new_map ->
-      new_scores = MapSet.new(reflection_scores(new_map))
+    grids_with_smudges =
+      Stream.map(0..(width * height - 1), fn idx ->
+        flat_grid
+        |> List.update_at(idx, &smudge/1)
+        |> Enum.chunk_every(width)
+      end)
 
-      case MapSet.to_list(MapSet.difference(new_scores, orig_scores)) do
-        [val] -> val
-        _ -> nil
-      end
+    Enum.find_value(grids_with_smudges, fn smuged_grid ->
+      smudged_scores = MapSet.new(reflection_scores(smuged_grid))
+      Enum.at(MapSet.difference(smudged_scores, orig_scores), 0, nil)
     end)
   end
 end
