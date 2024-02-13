@@ -216,6 +216,7 @@ defmodule BigGrid do
 
     if run_assertions do
       IO.puts("RUNNING ASSERTIONS")
+
       defp check_invariants!([fst | rest] = grid, op) do
         Enum.reduce(rest, fst, fn {this, _}, {prev, _} = x ->
           if prev.last < this.first do
@@ -262,8 +263,9 @@ defmodule BigGrid do
       Range.size(x_range) * Range.size(y_range)
     end
 
+    @spec get(t, point2d) :: value
     @spec get(t, point2d, value) :: value
-    def get(grid, {x, y}, default) do
+    def get(grid, {x, y}, default \\ nil) do
       case BigGrid1D.get(grid, x, default) do
         ^default -> default
         ydim -> BigGrid1D.get(ydim, y, default)
@@ -313,8 +315,9 @@ defmodule BigGrid do
       Range.size(x_range) * Range.size(y_range) * Range.size(z_range)
     end
 
+    @spec get(t, point3d) :: value
     @spec get(t, point3d, value) :: value
-    def get(grid, {x, y, z}, default) do
+    def get(grid, {x, y, z}, default \\ nil) do
       case BigGrid2D.get(grid, {x, y}, default) do
         ^default -> default
         zdim -> BigGrid1D.get(zdim, z, default)
